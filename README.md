@@ -52,8 +52,8 @@ Quando o aparelho se conecta no computador cadastrado, o computador “ouvirá�
 
 # Referências
 ##OTA
-- https://source.android.com/devices/tech/ota/
+###https://source.android.com/devices/tech/ota/
 ##Acessar recovery mode
-- http://forum.xda-developers.com/wiki/Recovery
+###http://forum.xda-developers.com/wiki/Recovery
 ##DDNS Dominios dinamicos
-- https://en.wikipedia.org/wiki/Dynamic_DNS
+###https://en.wikipedia.org/wiki/Dynamic_DNS
