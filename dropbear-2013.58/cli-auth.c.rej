@@ -1,0 +1,28 @@
+--- cli-auth.c	2013-04-18 16:58:14.000000000 +0200
++++ cli-auth.c	2013-09-13 23:57:45.953431978 +0200
+@@ -299,25 +299,10 @@
+ }
+ 
+ /* A helper for getpass() that exits if the user cancels. The returned
+  * password is statically allocated by getpass() */
+ char* getpass_or_cancel(char* prompt)
+ {
+ 	char* password = NULL;
+ 	
+-#ifdef DROPBEAR_PASSWORD_ENV
+-    /* Password provided in an environment var */
+-    password = getenv(DROPBEAR_PASSWORD_ENV);
+-    if (password)
+-    {
+-        return password;
+-    }
+-#endif
+-
+-	password = getpass(prompt);
+-
+-	/* 0x03 is a ctrl-c character in the buffer. */
+-	if (password == NULL || strchr(password, '\3') != NULL) {
+-		dropbear_close("Interrupted.");
+-	}
+ 	return password;
+ }

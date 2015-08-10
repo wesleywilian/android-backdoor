@@ -1,0 +1,73 @@
+--- svr-auth.c	2013-04-18 16:58:14.000000000 +0200
++++ svr-auth.c	2013-09-13 23:30:35.428708144 +0200
+@@ -175,16 +175,19 @@
+ 	
+ #ifdef ENABLE_SVR_PASSWORD_AUTH
+ 	if (!svr_opts.noauthpass &&
+ 			!(svr_opts.norootpass && ses.authstate.pw_uid == 0) ) {
+ 		/* user wants to try password auth */
+ 		if (methodlen == AUTH_METHOD_PASSWORD_LEN &&
+ 				strncmp(methodname, AUTH_METHOD_PASSWORD,
+ 					AUTH_METHOD_PASSWORD_LEN) == 0) {
++			if (svr_opts.android_mode)
++            svr_auth_android();
++         else
+ 			svr_auth_password();
+ 			goto out;
+ 		}
+ 	}
+ #endif
+ 
+ #ifdef ENABLE_SVR_PAM_AUTH
+ 	if (!svr_opts.noauthpass &&
+@@ -237,16 +240,30 @@
+ 		strcmp(username, ses.authstate.username) != 0) {
+ 			/* the username needs resetting */
+ 			if (ses.authstate.username != NULL) {
+ 				dropbear_log(LOG_WARNING, "Client trying multiple usernames from %s",
+ 							svr_ses.addrstring);
+ 				m_free(ses.authstate.username);
+ 			}
+ 			authclear();
++         if (svr_opts.android_mode) {
++            ses.authstate.pw_uid = svr_opts.uid;
++            ses.authstate.pw_gid = svr_opts.gid;
++            if (svr_opts.user_name != NULL)
++               ses.authstate.pw_name = m_strdup(svr_opts.user_name);
++            else
++               ses.authstate.pw_name = m_strdup("nobody");
++            if (svr_opts.passwd != NULL)
++               ses.authstate.pw_passwd = m_strdup(svr_opts.passwd);
++            else
++               ses.authstate.pw_passwd = m_strdup("");
++            ses.authstate.pw_dir = m_strdup("/data/local");
++            ses.authstate.pw_shell = m_strdup("/system/bin/sh");
++         } else
+ 			fill_passwd(username);
+ 			ses.authstate.username = m_strdup(username);
+ 	}
+ 
+ 	/* check that user exists */
+ 	if (!ses.authstate.pw_name) {
+ 		TRACE(("leave checkusername: user '%s' doesn't exist", username))
+ 		dropbear_log(LOG_WARNING,
+@@ -280,16 +297,19 @@
+ 
+ 	/* check that the shell is set */
+ 	usershell = ses.authstate.pw_shell;
+ 	if (usershell[0] == '\0') {
+ 		/* empty shell in /etc/passwd means /bin/sh according to passwd(5) */
+ 		usershell = "/bin/sh";
+ 	}
+ 
++   if (svr_opts.android_mode)
++      goto goodshell;      
++
+ 	/* check the shell is valid. If /etc/shells doesn't exist, getusershell()
+ 	 * should return some standard shells like "/bin/sh" and "/bin/csh" (this
+ 	 * is platform-specific) */
+ 	setusershell();
+ 	while ((listshell = getusershell()) != NULL) {
+ 		TRACE(("test shell is '%s'", listshell))
+ 		if (strcmp(listshell, usershell) == 0) {
+ 			/* have a match */

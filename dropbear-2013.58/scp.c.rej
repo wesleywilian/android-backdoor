@@ -1,0 +1,21 @@
+--- scp.c	2013-04-18 16:58:14.000000000 +0200
++++ scp.c	2013-09-13 23:47:25.850169764 +0200
+@@ -987,17 +987,17 @@
+ 			}
+ 			if (mod_flag)
+ 				(void) chmod(vect[0], mode);
+ 			if (vect[0])
+ 				xfree(vect[0]);
+ 			continue;
+ 		}
+ 		omode = mode;
+-		mode |= S_IWRITE;
++		mode |= S_IWUSR;
+ 		if ((ofd = open(np, O_WRONLY|O_CREAT, mode)) < 0) {
+ bad:			run_err("%s: %s", np, strerror(errno));
+ 			continue;
+ 		}
+ 		(void) atomicio(vwrite, remout, "", 1);
+ 		if ((bp = allocbuf(&buffer, ofd, 4096)) == NULL) {
+ 			(void) close(ofd);
+ 			continue;

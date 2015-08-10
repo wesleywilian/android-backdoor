@@ -1,0 +1,44 @@
+--- runopts.h	2013-04-18 16:58:14.000000000 +0200
++++ runopts.h	2013-09-13 23:30:35.424708122 +0200
+@@ -20,16 +20,17 @@
+  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  * SOFTWARE. */
+ 
+ #ifndef _RUNOPTS_H_
+ #define _RUNOPTS_H_
+ 
++#include <pwd.h>
+ #include "includes.h"
+ #include "signkey.h"
+ #include "buffer.h"
+ #include "auth.h"
+ #include "tcpfwd.h"
+ 
+ typedef struct runopts {
+ 
+@@ -97,16 +98,23 @@
+ #ifdef ENABLE_SVR_LOCALTCPFWD
+ 	int nolocaltcp;
+ #endif
+ 
+ 	sign_key *hostkey;
+ 	buffer * banner;
+ 	char * pidfile;
+ 
++   int android_mode;
++   char *user_name;
++   char *passwd;
++   char *authkey;
++   uid_t uid;
++   gid_t gid;
++
+ } svr_runopts;
+ 
+ extern svr_runopts svr_opts;
+ 
+ void svr_getopts(int argc, char ** argv);
+ void loadhostkeys();
+ 
+ typedef struct cli_runopts {

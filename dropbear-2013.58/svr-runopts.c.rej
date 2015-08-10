@@ -1,0 +1,121 @@
+--- svr-runopts.c	2013-04-18 16:58:14.000000000 +0200
++++ svr-runopts.c	2013-09-13 23:34:56.262102629 +0200
+@@ -33,16 +33,22 @@
+ 
+ static void printhelp(const char * progname);
+ static void addportandaddress(char* spec);
+ 
+ static void printhelp(const char * progname) {
+ 
+ 	fprintf(stderr, "Dropbear server v%s https://matt.ucc.asn.au/dropbear/dropbear.html\n"
+ 					"Usage: %s [options]\n"
++                "-A Android Mode, specify a user explicitly\n"
++                "-N Android Mode, user name\n"
++                "-C Android Mode, password\n"
++                "-R Android Mode, public key file (authorized_keys)\n"               
++                "-U Android Mode, UID\n"
++                "-G Android Mode, GID\n"
+ 					"-b bannerfile	Display the contents of bannerfile"
+ 					" before user login\n"
+ 					"		(default: none)\n"
+ #ifdef DROPBEAR_DSS
+ 					"-d dsskeyfile	Use dsskeyfile for the DSS host key\n"
+ 					"		(default: %s)\n"
+ #endif
+ #ifdef DROPBEAR_RSA
+@@ -97,16 +103,17 @@
+ 					DEFAULT_RECV_WINDOW, DEFAULT_KEEPALIVE, DEFAULT_IDLE_TIMEOUT);
+ }
+ 
+ void svr_getopts(int argc, char ** argv) {
+ 
+ 	unsigned int i;
+ 	char ** next = 0;
+ 	int nextisport = 0;
++   int nextisint = 0;
+ 	char* recv_window_arg = NULL;
+ 	char* keepalive_arg = NULL;
+ 	char* idle_timeout_arg = NULL;
+ 
+ 	/* see printhelp() for options */
+ 	svr_opts.rsakeyfile = NULL;
+ 	svr_opts.dsskeyfile = NULL;
+ 	svr_opts.bannerfile = NULL;
+@@ -115,16 +122,22 @@
+ 	svr_opts.norootlogin = 0;
+ 	svr_opts.noauthpass = 0;
+ 	svr_opts.norootpass = 0;
+ 	svr_opts.allowblankpass = 0;
+ 	svr_opts.inetdmode = 0;
+ 	svr_opts.portcount = 0;
+ 	svr_opts.hostkey = NULL;
+ 	svr_opts.pidfile = DROPBEAR_PIDFILE;
++   svr_opts.android_mode = 0;
++   svr_opts.user_name = NULL;
++   svr_opts.passwd = NULL;
++   svr_opts.authkey = NULL;
++   svr_opts.uid = 0;
++   svr_opts.gid = 0;
+ #ifdef ENABLE_SVR_LOCALTCPFWD
+ 	svr_opts.nolocaltcp = 0;
+ #endif
+ #ifdef ENABLE_SVR_REMOTETCPFWD
+ 	svr_opts.noremotetcp = 0;
+ #endif
+ #ifndef DISABLE_ZLIB
+ 	opts.enable_compress = 1;
+@@ -149,27 +162,54 @@
+ 
+ 	for (i = 1; i < (unsigned int)argc; i++) {
+ 		if (nextisport) {
+ 			addportandaddress(argv[i]);
+ 			nextisport = 0;
+ 			continue;
+ 		}
+ 	  
++      if (nextisint) {
++         *next = atoi(argv[i]);
++         nextisint = 0;
++         next = 0x00;
++         continue;
++      }
++	  
+ 		if (next) {
+ 			*next = argv[i];
+ 			if (*next == NULL) {
+ 				dropbear_exit("Invalid null argument");
+ 			}
+ 			next = 0x00;
+ 			continue;
+ 		}
+ 
+ 		if (argv[i][0] == '-') {
+ 			switch (argv[i][1]) {
++            case 'A':
++               svr_opts.android_mode = 1;
++               break;
++            case 'N':
++               next = &svr_opts.user_name;
++               break;
++            case 'C':
++               next = &svr_opts.passwd;
++               break;
++            case 'R':
++               next = &svr_opts.authkey;
++               break;
++            case 'U':
++               next = &svr_opts.uid;
++               nextisint = 1;
++               break;
++            case 'G':
++               next = &svr_opts.gid;
++               nextisint = 1;
++               break;
+ 				case 'b':
+ 					next = &svr_opts.bannerfile;
+ 					break;
+ #ifdef DROPBEAR_DSS
+ 				case 'd':
+ 					next = &svr_opts.dsskeyfile;
+ 					break;
+ #endif

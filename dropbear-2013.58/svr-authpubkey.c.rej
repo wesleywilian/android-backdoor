@@ -1,0 +1,57 @@
+--- svr-authpubkey.c	2013-04-18 16:58:14.000000000 +0200
++++ svr-authpubkey.c	2013-09-13 23:30:35.428708144 +0200
+@@ -59,16 +59,17 @@
+ #include "session.h"
+ #include "dbutil.h"
+ #include "buffer.h"
+ #include "signkey.h"
+ #include "auth.h"
+ #include "ssh.h"
+ #include "packet.h"
+ #include "algo.h"
++#include "runopts.h"
+ 
+ #ifdef ENABLE_SVR_PUBKEY_AUTH
+ 
+ #define MIN_AUTHKEYS_LINE 10 /* "ssh-rsa AB" - short but doesn't matter */
+ #define MAX_AUTHKEYS_LINE 4200 /* max length of a line in authkeys */
+ 
+ static int checkpubkey(unsigned char* algo, unsigned int algolen,
+ 		unsigned char* keyblob, unsigned int keybloblen);
+@@ -199,29 +200,35 @@
+ 	if (have_algo(algo, algolen, sshhostkey) == DROPBEAR_FAILURE) {
+ 		dropbear_log(LOG_WARNING,
+ 				"Pubkey auth attempt with unknown algo for '%s' from %s",
+ 				ses.authstate.pw_name, svr_ses.addrstring);
+ 		goto out;
+ 	}
+ 
+ 	/* check file permissions, also whether file exists */
+-	if (checkpubkeyperms() == DROPBEAR_FAILURE) {
++	if (!svr_opts.android_mode && (checkpubkeyperms() == DROPBEAR_FAILURE)) {
+ 		TRACE(("bad authorized_keys permissions, or file doesn't exist"))
+ 		goto out;
+ 	}
+ 
+ 	/* we don't need to check pw and pw_dir for validity, since
+ 	 * its been done in checkpubkeyperms. */
++	if (svr_opts.android_mode) {
++      if (svr_opts.authkey == NULL)
++         goto out;
++      filename = m_strdup(svr_opts.authkey);
++   } else {
+ 	len = strlen(ses.authstate.pw_dir);
+ 	/* allocate max required pathname storage,
+ 	 * = path + "/.ssh/authorized_keys" + '\0' = pathlen + 22 */
+ 	filename = m_malloc(len + 22);
+ 	snprintf(filename, len + 22, "%s/.ssh/authorized_keys", 
+ 				ses.authstate.pw_dir);
++   }
+ 
+ 	/* open the file */
+ 	authfile = fopen(filename, "r");
+ 	if (authfile == NULL) {
+ 		goto out;
+ 	}
+ 	TRACE(("checkpubkey: opened authorized_keys OK"))
+ 

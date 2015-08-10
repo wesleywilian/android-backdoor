@@ -1,0 +1,43 @@
+--- loginrec.c	2013-04-18 16:58:14.000000000 +0200
++++ loginrec.c	2013-09-13 23:30:35.424708122 +0200
+@@ -152,16 +152,17 @@
+  **
+  **/
+ 
+ 
+ #include "includes.h"
+ #include "loginrec.h"
+ #include "dbutil.h"
+ #include "atomicio.h"
++#include "session.h"
+ 
+ /**
+  ** prototypes for helper functions in this file
+  **/
+ 
+ #if HAVE_UTMP_H
+ void set_utmp_time(struct logininfo *li, struct utmp *ut);
+ void construct_utmp(struct logininfo *li, struct utmp *ut);
+@@ -272,18 +273,20 @@
+ 	/* set the line information */
+ 	if (line)
+ 		line_fullname(li->line, line, sizeof(li->line));
+ 
+ 	if (username) {
+ 		strlcpy(li->username, username, sizeof(li->username));
+ 		pw = getpwnam(li->username);
+ 		if (pw == NULL)
+-			dropbear_exit("login_init_entry: Cannot find user \"%s\"",
+-					li->username);
++         li->uid = ses.authstate.pw_uid;   
++            //dropbear_exit("login_init_entry: Cannot find user \"%s\"",
++            //      li->username);
++      else
+ 		li->uid = pw->pw_uid;
+ 	}
+ 
+ 	if (hostname)
+ 		strlcpy(li->hostname, hostname, sizeof(li->hostname));
+ 
+ 	return 1;
+ }
